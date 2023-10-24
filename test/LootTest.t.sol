@@ -55,8 +55,7 @@ contract LootTest is BaseComposableCoWTest {
         vm.warp(data.startTime);
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, ERR_NOT_SAFE));
-        GPv2Order.Data memory order =
-            loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(address(0x7)));
+        loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(address(0x7)));
     }
 
     function test_validation_offchain_RevertWhenFallbackHandlerNotExtensible() public {
@@ -69,8 +68,7 @@ contract LootTest is BaseComposableCoWTest {
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, ERR_INVALID_FALLBACK_HANDLER));
 
-        GPv2Order.Data memory order =
-            loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(safe1));
+        loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(safe1));
     }
 
     function test_validation_offchain_RevertWhenComposableCoWNotDomainVerifier() public {
@@ -89,8 +87,7 @@ contract LootTest is BaseComposableCoWTest {
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, ERR_DOMAIN_VERIFIER_NOT_SET));
 
-        GPv2Order.Data memory order =
-            loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(safe1));
+        loot.getTradeableOrder(safe, address(0), bytes32(0), abi.encode(data), abi.encode(safe1));
     }
 
     function test_validation_RevertWhenSellTokenEqualsBuyToken() public {
