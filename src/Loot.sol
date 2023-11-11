@@ -9,6 +9,7 @@ import {ComposableCoW} from "composable/ComposableCoW.sol";
 import {ExtensibleFallbackHandler} from "safe/handler/ExtensibleFallbackHandler.sol";
 
 import "composable/BaseConditionalOrder.sol";
+import {IZkVerifier} from "./interfaces/IZkVerifier.sol";
 
 // --- error strings
 /// @dev can't buy and sell the same token
@@ -29,6 +30,8 @@ string constant ERR_INVALID_FALLBACK_HANDLER = "invalid fallback handler";
 string constant ERR_NOT_SAFE = "receiver is not a Safe";
 /// @dev domain verifier not set
 string constant ERR_DOMAIN_VERIFIER_NOT_SET = "domain verifier not set";
+/// @dev invalid zk proof
+string constant ERR_INVALID_ZK_PROOF = "invalid zk proof";
 
 /**
  * @title Treasure hunt order type for CoW Protocol 💰🐮
@@ -45,6 +48,7 @@ contract Loot is BaseConditionalOrder {
         uint32 validTo;
         // treasure hunt specifics
         uint32 startTime; // unix timestamp when the hunt starts
+        address verifier; // address of the zk verifier
     }
 
     ExtensibleFallbackHandler public immutable extensibleFallbackHandler;
@@ -84,14 +88,14 @@ contract Loot is BaseConditionalOrder {
         }
 
         // get the off-chain input data and validate
-        Safe receiver = Safe(payable(abi.decode(offChainInput, (address))));
+        (address receiver, IZkVerifier.Proof memory proof) = abi.decode(offChainInput, (address, IZkVerifier.Proof));
 
         /**
          * @dev We only want to allow receivers that:
          *      1. Are a `Safe` with their fallback handler set to `ExtensibleFallbackHandler`
          *      2. Have set `ComposableCoW` as a domain verifier for the `GPv2Settlement` EIP-712 domain
          */
-        try receiver.getStorageAt(uint256(FALLBACK_HANDLER_STORAGE_SLOT), 1) returns (
+        try Safe(payable(receiver)).getStorageAt(uint256(FALLBACK_HANDLER_STORAGE_SLOT), 1) returns (
             bytes memory fallbackHandlerStorage
         ) {
             address fallbackHandler = abi.decode(fallbackHandlerStorage, (address));
@@ -99,12 +103,18 @@ contract Loot is BaseConditionalOrder {
                 revert OrderNotValid(ERR_INVALID_FALLBACK_HANDLER);
             }
 
-            address domainVerifier = address(extensibleFallbackHandler.domainVerifiers(receiver, domainSeparator));
+            address domainVerifier =
+                address(extensibleFallbackHandler.domainVerifiers(Safe(payable(receiver)), domainSeparator));
             if (domainVerifier != address(composableCow)) {
                 revert OrderNotValid(ERR_DOMAIN_VERIFIER_NOT_SET);
             }
         } catch {
             revert OrderNotValid(ERR_NOT_SAFE);
+        }
+
+        // use a zk proof to verify that the receiver indeed knows the secret, and is therefore eligible to receive the loot
+        if (!IZkVerifier(data.verifier).verifyTx(proof, [uint256(uint160(address(receiver)))])) {
+            revert OrderNotValid(ERR_INVALID_ZK_PROOF);
         }
 
         order = GPv2Order.Data(

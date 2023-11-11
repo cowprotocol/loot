@@ -1,0 +1,36 @@
+from "field" import FIELD_SIZE_IN_BITS;
+import "utils/pack/bool/unpack";
+import "utils/pack/bool/pack";
+import "hashes/sha256/512bitPacked" as sha256packed;
+
+/// @title Address-locked hash preimage verification
+/// @notice This contract verifies that the preimage of a hash is correct
+///         and that the knowledge of the preimage is locked to a specific
+///         address.
+def main(
+    // a + b is the sha256(preImage), where preImage is 256 bits
+    // this is to ensure high possible entropy in the preImage
+    private field a, // 128 bits
+    private field b, // 128 bits
+    public field receiver,
+    private field c0,
+    private field c1
+) {
+    // First check to make sure that the preImage is valid
+    field[2] h = sha256packed([a, b, 0, 0]);
+
+    assert(h[0] == insert digest part 1 here);
+    assert(h[1] == insert digest part 2 here);
+
+    // Second, check to make sure that the combined hash of the preimage and receiver
+    // is equal to the c1 and c2 values
+
+    // Extract the receiver into a 32-bit and 128-bit value
+    bool[160] receiverBits = unpack::<160>(receiver);
+    field receiver128 = pack::<128>(receiverBits[0..128]);
+    field receiver32 = pack::<32>(receiverBits[128..160]);
+
+    field[2] c = sha256packed([a, b, receiver128, receiver32]);
+    assert(c0 == c[0]);
+    assert(c1 == c[1]);
+}
