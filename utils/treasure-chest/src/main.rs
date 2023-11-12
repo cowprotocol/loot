@@ -40,28 +40,50 @@ fn main() {
 }
 
 fn get_message_hash() -> Result<(u128, u128, Vec<u8>), Error> {
-    let mut p = Readline::default()
+    let mut p0 = Readline::default()
+        .title("Previous secret phrase")
+        .prompt()?;
+    let message0 = p0.run()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
+    let mut message0_hash = match message0.len() == 0 {
+        true => vec![0; 32],
+        false => Sha256::digest(&message0).to_vec()
+    };
+
+    let (previous_part_1, previous_part_2) = hash_to_u128(&message0_hash);
+
+    println!("Previous Preimage hash parts:");
+    println!("a: {}", previous_part_1);
+    println!("b: {}", previous_part_2);
+
+
+    let mut p1 = Readline::default()
         .title("Secret phrase")
         .prompt()?;
-    let message = p.run()
+    let message1 = p1.run()
         .unwrap()
         .as_bytes()
         .to_vec();
 
     // Now calculate the intermediate hash
-    let intermediate_hash = Sha256::digest(&message).to_vec();
-    let (part1, part2) = hash_to_u128(&intermediate_hash);
+    let mut message1_hash = Sha256::digest(&message1).to_vec();
+    let (current_part_1, current_part_2) = hash_to_u128(&message1_hash);
 
-    println!("Preimage hash parts:");
-    println!("a: {}", part1);
-    println!("b: {}", part2);
+    println!("Current Preimage hash parts:");
+    println!("a: {}", current_part_1);
+    println!("b: {}", current_part_2);
+
+    message1_hash.append(&mut message0_hash);
 
     // Now calculate the final hash, which is the hash of the
     // intermediate hash with 32 zero bytes appended
-    let mut message = intermediate_hash;
-    message.extend(vec![0; 32]);
+    // let mut message = p1_hash;
+    // message.extend(vec![0; 32]);
 
-    Ok((part1, part2, Sha256::digest(&message).to_vec()))
+    Ok((current_part_1, current_part_2, Sha256::digest(&message1_hash).to_vec()))
 }
 
 fn prepare() {
@@ -96,7 +118,7 @@ fn generate_params(address: &H160) {
     let (final_part1, final_part2) = hash_to_u128(&final_hash);
     let receiver: U256 = address_bytes.into();
 
-    println!("Digest hash parts (put in zk circuit):");
+    println!("Digest hash parts:");
     println!("a: {}", part1);
     println!("b: {}", part2);
 

@@ -23,5 +23,5 @@ interface IZkVerifier {
         G1Point c;
     }
 
-    function verifyTx(Proof memory proof, uint256[1] memory input) external view returns (bool r);
+    function verifyTx(Proof memory proof, uint256[3] memory input) external view returns (bool r);
 }

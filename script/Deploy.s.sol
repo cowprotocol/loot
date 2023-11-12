@@ -5,6 +5,8 @@ import "forge-std/Script.sol";
 
 // Order type
 import "composable/ComposableCoW.sol";
+import "../src/zk/verifier.sol";
+import {IZkVerifier} from "../src/interfaces/IZkVerifier.sol";
 import "../src/Loot.sol";
 
 contract Deploy is Script {
@@ -15,7 +17,10 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
+        // Deploy the verifier
+        IZkVerifier verifier = IZkVerifier(address(new Verifier()));
+
         // Deploy Loot
-        new Loot{salt: ""}(eHandler, composableCow);
+        new Loot{salt: ""}(eHandler, composableCow, verifier);
     }
 }

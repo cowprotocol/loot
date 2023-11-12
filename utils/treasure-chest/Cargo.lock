@@ -508,17 +508,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
-name = "cow-treasure-hunt"
-version = "0.1.0"
-dependencies = [
- "clap",
- "ethers",
- "eyre",
- "promkit",
- "sha2",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3350,6 +3339,17 @@ checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
  "pin-project",
  "tracing",
+]
+
+[[package]]
+name = "treasure-chest"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "ethers",
+ "eyre",
+ "promkit",
+ "sha2",
 ]
 
 [[package]]

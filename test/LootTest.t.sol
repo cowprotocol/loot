@@ -5,8 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 import "composable-test/ComposableCoW.base.t.sol";
 import "../src/Loot.sol";
-import {Verifier as Verifier1} from "./ZkSafe1Verifier.sol";
-import {Verifier as Verifier2} from "./ZkSafe2Verifier.sol";
+import {Verifier} from "../src/zk/verifier.sol";
 
 contract LootTest is BaseComposableCoWTest {
     IERC20 constant SELL_TOKEN = IERC20(address(0x1));
@@ -17,25 +16,24 @@ contract LootTest is BaseComposableCoWTest {
     Loot loot;
     address safe;
     bytes32 domainSeparator;
-    IZkVerifier verifier1;
-    IZkVerifier verifier2;
+    IZkVerifier verifier;
 
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
 
+        verifier = IZkVerifier(address(new Verifier()));
+
         loot = new Loot(
             eHandler,
-            composableCow
+            composableCow,
+            verifier
         );
-
-        verifier1 = IZkVerifier(address(new Verifier1()));
-        verifier2 = IZkVerifier(address(new Verifier2()));
 
         domainSeparator = composableCow.domainSeparator();
     }
 
     function test_verifyOrder() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         vm.warp(data.startTime);
 
         GPv2Order.Data memory empty;
@@ -56,7 +54,7 @@ contract LootTest is BaseComposableCoWTest {
     }
 
     function test_timing_RevertBeforeHuntStarted() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
 
         // if before start time, should revert
         vm.warp(data.startTime - 1);
@@ -67,7 +65,7 @@ contract LootTest is BaseComposableCoWTest {
     }
 
     function test_validation_offchain_RevertWhenNotSafe() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         vm.warp(data.startTime);
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, ERR_NOT_SAFE));
@@ -81,7 +79,7 @@ contract LootTest is BaseComposableCoWTest {
     }
 
     function test_validation_offchain_RevertWhenFallbackHandlerNotExtensible() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         vm.warp(data.startTime);
 
         // set the fallback handler to something other than `ExtensibleFallbackHandler`
@@ -94,7 +92,7 @@ contract LootTest is BaseComposableCoWTest {
     }
 
     function test_validation_offchain_RevertWhenComposableCoWNotDomainVerifier() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         vm.warp(data.startTime);
 
         // Set the `GPv2Settlement` domain verifier to something other than `ComposableCoW`
@@ -117,44 +115,46 @@ contract LootTest is BaseComposableCoWTest {
     }
 
     function test_validation_RevertWhenSellTokenEqualsBuyToken() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         data.sellToken = data.buyToken;
 
         helper_runRevertingValidate(data, ERR_SAME_TOKENS);
     }
 
     function test_validation_RevertWhenSellAmountIsZero() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         data.sellAmount = 0;
 
         helper_runRevertingValidate(data, ERR_MIN_SELL_AMOUNT);
     }
 
     function test_validation_RevertWhenBuyAmountIsZero() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         data.buyAmount = 0;
 
         helper_runRevertingValidate(data, ERR_MIN_BUY_AMOUNT);
     }
 
     function test_validation_RevertWhenStartTimeIsZero() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         data.startTime = 0;
 
         helper_runRevertingValidate(data, ERR_MIN_START_TIME);
     }
 
     function test_validation_RevertWhenStartTimeIsAfterValidTo() public {
-        Loot.Data memory data = helper_testData(address(verifier1));
+        Loot.Data memory data = helper_testData();
         data.startTime = data.validTo + 1;
 
         helper_runRevertingValidate(data, ERR_INSUFFICIENT_TIME);
     }
 
     function test_e2e_settle() public {
-        Loot.Data memory data = helper_testData(address(verifier2));
+        Loot.Data memory data = helper_testData();
         data.sellToken = token0;
         data.buyToken = token1;
+        data.d0 = bytes32(0x00000000000000000000000000000000ecc730b6a224df4ca27ee4b5217c926c);
+        data.d1 = bytes32(0x00000000000000000000000000000000055f9cd72ca92f6bc9481cc0fd85b5f1);
 
         SafeLib.execute(
             safe2,
@@ -204,7 +204,7 @@ contract LootTest is BaseComposableCoWTest {
         loot.validateData(abi.encode(data));
     }
 
-    function helper_testData(address verifier) internal pure returns (Loot.Data memory) {
+    function helper_testData() internal pure returns (Loot.Data memory) {
         return Loot.Data({
             sellToken: SELL_TOKEN,
             buyToken: BUY_TOKEN,
@@ -213,7 +213,8 @@ contract LootTest is BaseComposableCoWTest {
             appData: bytes32(0),
             validTo: 1000,
             startTime: 79,
-            verifier: verifier
+            d0: bytes32(0x0000000000000000000000000000000009ade42435fc0de2382b6513b4815141),
+            d1: bytes32(0x00000000000000000000000000000000ec0235ae49db101bb69056f5e3d545aa)
         });
     }
 
@@ -229,22 +230,22 @@ contract LootTest is BaseComposableCoWTest {
 
     function helper_getProofSafe1() internal pure returns (IZkVerifier.Proof memory) {
         IZkVerifier.G1Point memory a = IZkVerifier.G1Point(
-            uint256(0x0a54f6f7f1903ca6749fa74e620daf2393f45186028160ae485fa9c8b2b26e29),
-            uint256(0x1d079debfae839f8e75270399285f869e1a0420632f5bfeae3e1a9d399444994)
+            uint256(0x2be3537354b44880866e75d864c304a91419f65de00a9ae7513ab58085ee1987),
+            uint256(0x17df30de3488a866f2705c4de4d8f2bb819d5559b2117fba01a87e9240d94b2a)
         );
         IZkVerifier.G2Point memory b = IZkVerifier.G2Point(
             [
-                uint256(0x1a9d682d056a31a70780e3e93197535db198d93f415824f411cccf11db8a18cf),
-                uint256(0x17e250315595efb131e37687f4930fcc3dd3f8667459413c98854a2d974c5b10)
+                uint256(0x214bc228e953bde2bbe25c11e3d312adaf21b24381cea52f1954a28301b5f2dc),
+                uint256(0x210bcc2d6417cf1fb21ba1ebd83b7d425a5801ee8b85b0ccb17049e4cd1f6fba)
             ],
             [
-                uint256(0x24aa801fbc9050c5b4053ce6e4c6cc544fce06bc185054d2622acca5c8b98e08),
-                uint256(0x25e6682e1367a0a015affc39eb5a5fbc119f054a14f33307a1d48d20f049cefd)
+                uint256(0x2b407fdccd2b9de0d2a0130e217b0cec510662adc0d5ff0baed94a466fdd097c),
+                uint256(0x0894fecd9df1c8240c6d31c1e8ec13a813574344375ae4c717b1beffebed2752)
             ]
         );
         IZkVerifier.G1Point memory c = IZkVerifier.G1Point(
-            uint256(0x1065d2562d04da2ea46e2989174b351549a8104421f4ddc25032609b042d1fba),
-            uint256(0x1894546595751798bed578c02586c034ba9b0bb533c95e570626573bb70669ae)
+            uint256(0x08b1c50f499c7e8d1544d1d1d9bc08e3a3e2bb4c38f991dec1eadf2e12c4e648),
+            uint256(0x29365d065c07aaf46d8ac0c2395e5a6bc3320b2343c30fae7cb202c602598613)
         );
 
         return IZkVerifier.Proof(a, b, c);
@@ -252,22 +253,22 @@ contract LootTest is BaseComposableCoWTest {
 
     function help_getProofSafe2() internal pure returns (IZkVerifier.Proof memory) {
         IZkVerifier.G1Point memory a = IZkVerifier.G1Point(
-            uint256(0x093b14dcf2af4b10ca458bad1fceefe1a7a91f8ed411df60a5e89e2c85b4e8a4),
-            uint256(0x0303ff2fd7a23fafc310867bedfdb5f93b4a58567d53aba8ffa8a4cdc07f15b4)
+            uint256(0x2545aaaadc1ac43d1f6eb9eacf0b732eab3db8c99e3f898aa3bca828ddb348da),
+            uint256(0x0e9dc9ee72617ea00f96f4eaa297e8cebebbca73384422278127b463fce2be3b)
         );
         IZkVerifier.G2Point memory b = IZkVerifier.G2Point(
             [
-                uint256(0x1a4bb3d95677b9e772ef6c7015398935cd73f7613247eaf9e3a85eaa57fb8c45),
-                uint256(0x22766fb05b4d7cd286ec1cf506e62743d2f7f0c52aa0ac812bd02bb85a1a048c)
+                uint256(0x1ba0228ecec4cb392912e9054d7701f52f7b78f86cda3a6ec907eb3a1038fc3e),
+                uint256(0x2f01307659cddd59c1aa238efad6d84b61993c17a24587ed38e4a5485c013f16)
             ],
             [
-                uint256(0x042ee5c99d7d83c31e0baf56a0fd94b6c91b15e7c66f08b32283a6a2adff98bf),
-                uint256(0x03bba86705503f7c37ebd44aa0d70735dc492f58b86c6950cce1c3483912c0cc)
+                uint256(0x089809164b25192c777cbc8fc6656241fd63b2c9b02bba2bd283c732eb55f84d),
+                uint256(0x02d0bb218f7a61455939202706ce3162e6934662ee49fb7a6e7553b38fa202d5)
             ]
         );
         IZkVerifier.G1Point memory c = IZkVerifier.G1Point(
-            uint256(0x1923e095c742ac614894e609e5240edd8a439df2a52f38ba194a9ee95761047c),
-            uint256(0x106dcacd792357edcf34a5daf267e97631535fbe5fdae90aa50e760d70f61aa6)
+            uint256(0x0a15553e60208dd715e5ab19c76e189fb540569bbf94a5a2517c3e767f518a5e),
+            uint256(0x0301ff4ba1ef270f2690fb9590167dc73c496775e20bf687a3e20137f2835476)
         );
 
         return IZkVerifier.Proof(a, b, c);
