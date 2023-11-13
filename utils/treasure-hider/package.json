@@ -1,0 +1,30 @@
+{
+  "name": "treasure-hider",
+  "version": "1.0.0",
+  "description": "Treasure hider for CoW Protocol treasure hunt",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typechain:codegen": "typechain --target ethers-v5 --out-dir ./src/typechain '../../out/**/*.json'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cowprotocol/loot.git"
+  },
+  "author": "CoW Protocol Developers",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/cowprotocol/loot/issues"
+  },
+  "homepage": "https://github.com/cowprotocol/loot#readme",
+  "dependencies": {
+    "@cowprotocol/cow-sdk": "^4.0.3",
+    "@openzeppelin/merkle-tree": "^1.0.5",
+    "ethers": "^5.7.2"
+  },
+  "devDependencies": {
+    "@typechain/ethers-v5": "^11.1.2",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.3.2",
+    "typescript": "^5.2.2"
+  }
+}

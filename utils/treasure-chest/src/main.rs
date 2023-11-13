@@ -78,11 +78,6 @@ fn get_message_hash() -> Result<(u128, u128, Vec<u8>), Error> {
 
     message1_hash.append(&mut message0_hash);
 
-    // Now calculate the final hash, which is the hash of the
-    // intermediate hash with 32 zero bytes appended
-    // let mut message = p1_hash;
-    // message.extend(vec![0; 32]);
-
     Ok((current_part_1, current_part_2, Sha256::digest(&message1_hash).to_vec()))
 }
 

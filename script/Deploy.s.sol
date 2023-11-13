@@ -18,7 +18,7 @@ contract Deploy is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy the verifier
-        IZkVerifier verifier = IZkVerifier(address(new Verifier()));
+        IZkVerifier verifier = IZkVerifier(address(new Verifier{salt: ""}()));
 
         // Deploy Loot
         new Loot{salt: ""}(eHandler, composableCow, verifier);
