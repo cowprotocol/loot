@@ -4,7 +4,8 @@
   "description": "Treasure hider for CoW Protocol treasure hunt",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typechain:codegen": "typechain --target ethers-v5 --out-dir ./src/typechain '../../out/**/*.json'"
+    "typechain:codegen": "typechain --target ethers-v5 --out-dir ./src/typechain '../../out/**/*.json'",
+    "prepare": "pnpm run typechain:codegen"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,14 @@
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^11.1.2",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "@typescript-eslint/parser": "^6.11.0",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.53.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "prettier": "^3.1.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.3.2",
     "typescript": "^5.2.2"
