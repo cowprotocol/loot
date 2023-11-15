@@ -18,8 +18,11 @@
   },
   "homepage": "https://github.com/cowprotocol/loot#readme",
   "dependencies": {
+    "@commander-js/extra-typings": "^11.1.0",
+    "@cowprotocol/app-data": "^1.2.0",
     "@cowprotocol/cow-sdk": "^4.0.3",
     "@openzeppelin/merkle-tree": "^1.0.5",
+    "commander": "^11.1.0",
     "ethers": "^5.7.2"
   },
   "devDependencies": {

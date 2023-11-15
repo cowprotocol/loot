@@ -42,3 +42,7 @@ export const PROOF_WITH_ADDRESS_ABI = [
 export const CONDITIONAL_ORDER_ABI = "tuple(address handler,bytes32 salt,bytes staticInput)";
 
 export const LOOT_DATA_ABI = "tuple(address sellToken,address buyToken,uint256 sellAmount,uint256 buyAmount,bytes32 appData,uint32 validTo,uint32 startTime,bytes32 d0,bytes32 d1)";
+
+export const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+
+export const LOOT_ORDER_CONTRACT_ADDRESS = "0x081B39051E6f91Dd03EDC099d6a94Fe76aB96218";
