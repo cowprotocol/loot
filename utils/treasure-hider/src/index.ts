@@ -115,6 +115,21 @@ const saltOption = new Option(
   "The salt the conditional order was created with"
 ).makeOptionMandatory(true);
 
+const swarmOption = new Option(
+  "--swarm <swarmCac>",
+  "The swarm CAC that contains the proof JSON",
+).conflicts(['ipfs', 'emit-proof']);
+
+const ipfsOption = new Option(
+  "--ipfs <ipfsCid>",
+  "The IPFS CID that contains the proof JSON",
+).conflicts(['swarm', 'emit-proof']);
+
+const emitProofOption = new Option(
+  "--emit-proof",
+  "Emit the proof on-chain",
+).conflicts(['swarm', 'ipfs']);
+
 async function main() {
   program.name("treasure-parser").description(description).version(version);
 
@@ -132,6 +147,9 @@ async function main() {
     .addOption(d0Option)
     .addOption(d1Option)
     .addOption(numDecoysOption)
+    .addOption(swarmOption)
+    .addOption(ipfsOption)
+    .addOption(emitProofOption)
     .action(async (options: BuryOptions) => {
       bury(options);
     });

@@ -1,7 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import { Data, ERC20_ABI, LOOT_DATA_ABI, PROOF_WITH_ADDRESS_ABI, Proof } from "./types";
 import { randomBytes } from "ethers/lib/utils";
-import { ConditionalOrderParams } from "@cowprotocol/cow-sdk";
+import { ConditionalOrderParams, ProofLocation, ProofStruct } from "@cowprotocol/cow-sdk";
 
 /**
  * Get the balance of the `Loot` safe that forms the basis of the conditional order
@@ -184,4 +184,44 @@ export async function getParams(params: GetParams): Promise<ConditionalOrderPara
         salt: salt ?? generateSecureRandom(),
         staticInput: encodedData,
     }
+}
+
+// abi.encode(bytes[] order) where order = abi.encode(bytes32[] proof, ConditionalOrderParams params)
+export function encodeProofLocationEmit(proof: string[], params: ConditionalOrderParams): ProofStruct {
+    const data = ethers.utils.defaultAbiCoder.encode(
+        ["bytes32[]", "tuple(address handler, bytes32 salt, bytes staticInput)"],
+        [proof, params],
+    );
+
+    return { data, location: ProofLocation.EMITTED }
+}
+
+// abi.encode(bytes32 swarmCac)
+export function encodeProofLocationSwarm(chunkAddress: string): ProofStruct {
+    const data = ethers.utils.defaultAbiCoder.encode(
+        ["bytes32"],
+        [chunkAddress],
+    );
+
+    return { data, location: ProofLocation.SWARM }
+}
+
+// abi.encode(string protobufUri, string[] enrTreeOrMultiaddr, string contentTopic, bytes payload)
+export function encodeProofLocationWaku(protobufUri: string, enrTreeOrMultiaddr: string[], contentTopic: string, payload: string): ProofStruct {
+    const data = ethers.utils.defaultAbiCoder.encode(
+        ["string", "string[]", "string", "bytes"],
+        [protobufUri, enrTreeOrMultiaddr, contentTopic, payload],
+    );
+
+    return { data, location: ProofLocation.WAKU };
+}
+
+// abi.encode(bytes32 ipfsCid)
+export function encodeProofLocationIPFS(ipfsCid: string): ProofStruct {
+    const data = ethers.utils.defaultAbiCoder.encode(
+        ["bytes32"],
+        [ipfsCid],
+    );
+
+    return { data, location: ProofLocation.IPFS };
 }

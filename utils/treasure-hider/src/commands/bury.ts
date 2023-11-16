@@ -1,5 +1,5 @@
 import { BigNumber } from "ethers";
-import { generateRandomConditionalOrder, getParams } from "../utils";
+import { encodeProofLocationEmit, encodeProofLocationIPFS, encodeProofLocationSwarm, generateRandomConditionalOrder, getParams } from "../utils";
 import { CONDITIONAL_ORDER_ABI, LOOT_ORDER_CONTRACT_ADDRESS } from "../types";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { ComposableCoW__factory } from "../typechain";
@@ -17,6 +17,9 @@ export interface BuryOptions {
     d0: string;
     d1: string;
     numDecoys: number;
+    swarmCac?: string;
+    ipfsCid?: string;
+    emitProof?: boolean;
 }
 
 export async function bury(options: BuryOptions): Promise<void> {
@@ -90,13 +93,25 @@ export async function bury(options: BuryOptions): Promise<void> {
     // Output
     const iface = ComposableCoW__factory.createInterface();
 
+    const proofData = () => {
+      if (options.emitProof) {
+        return encodeProofLocationEmit(proof, params);
+      } else if (options.swarmCac) {
+        return encodeProofLocationSwarm(options.swarmCac);
+      } else if (options.ipfsCid) {
+        return encodeProofLocationIPFS(options.ipfsCid);
+      } else {
+        return { data: "0x", location: ProofLocation.PRIVATE };
+      }
+    }
+
     // 1. The TX data to set the merkle root
     const setRootTx = {
       to: COMPOSABLE_COW_CONTRACT_ADDRESS[100],
       value: 0,
       data: iface.encodeFunctionData("setRoot", [
         tree.root,
-        { data: "0x", location: ProofLocation.PRIVATE },
+        proofData(),
       ])
     }
 
