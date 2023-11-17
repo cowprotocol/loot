@@ -8,9 +8,11 @@ It's been a long, cold crypto-winter, but spring has finally arrived. The sun is
 
 Each treasure chest, except the first one, requires two keys to unlock. It is expected that MasterCoW uses long and complex secret phrases to generate the keys, so the CoW Protocol team has decided to use zk-SNARKs to verify the keys, without revealing them. The CoW Protocol team need your help to locate the keys, and prove that they are correct, so that they can unlock the treasure chests. You will be rewarded handsomely for your efforts, both monetarily, and with the eternal gratitude of the CoWmunity.  
 
-Treasure chests:
+Treasure chests (for rewards totaling 11,500 WXDAI + $1000 worth of of BZZ):
 
-* `gno:0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6`
+* Chest 1: 500 WXDAI: [`gno:0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6`](https://gnosisscan.io/address/0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6)
+* Chest 2: 1000 WXDAI + $1000 worth of BZZ from [Ethereum Swarm](https://ethswarm.org). Address TBD.
+* Chest 3: 10000 WXDAI. Address TBD.
 
 ## Getting started
 
@@ -20,6 +22,8 @@ This repository is a mono-repo, containing:
 - The `Loot` zk-SNARK circuit, written in [zokrates](https://zokrates.github.io/gettingstarted.html)
 - The [`treasure-chest`](./utils/treasure-chest/README.md), a CLI tool for generating the co-ordinate points for the zk-SNARK circuit
 - The [`treasure-hider`](./utils/treasure-hider/README.md), a CLI tool used to bury and dig up treasure chests
+
+Join the [CoW Protocol Discord](https://discord.gg/cowprotocol) in the **#treasure-hunt** channel to discuss the treasure hunt with other participants.
 
 ### Knowledge Prerequisites
 
