@@ -1,0 +1,51 @@
+from "field" import FIELD_SIZE_IN_BITS;
+import "utils/pack/bool/unpack";
+import "utils/pack/bool/pack";
+import "hashes/sha256/512bitPacked" as sha256packed;
+
+/// @title Address-locked hash preimage verification
+/// @notice This contract verifies that the preimage of a hash is correct
+///         and that the knowledge of the preimage is locked to a specific
+///         address.
+/// @param a the first 128 bits of the preimage
+/// @param b the second 128 bits of the preimage
+/// @param pa the first 128 bits of the previous preimage in chain
+/// @param pb the second 128 bits of the previous preimage in chain
+/// @param d0 the first 128 bits of the digest (digest = H(preImage || previousPreImage))
+/// @param d1 the second 128 bits of the digest (digest = H(preImage || previousPreImage))
+/// @param receiver the address that is attempting to prove knowledge of the preimage
+/// @param c0 the first 128 bits of the combined hash of the preimage and receiver
+/// @param c1 the second 128 bits of the combined hash of the preimage and receiver
+def main(
+    private field a,
+    private field b,
+    private field pa,
+    private field pb,
+    public field d0,
+    public field d1,
+    public field receiver,
+    private field c0,
+    private field c1
+) {
+    // 1. Check to make sure that the preImage is valid. We do this by comparing
+    //     the preImage with the digest.
+    field[2] h = sha256packed([a, b, pa, pb]);
+    // h = H(preImage || previousPreimage), or H(preImage || 0) in the case of first in series
+    assert(h[0] == d0);
+    assert(h[1] == d1);
+
+    // 2. Check to make sure that the preImage being verified is associated with
+    //    the receiver. This prevents malicious users from copying proofs and
+    //    attempting to front-run the legitimate receiver.
+
+    // 2a. Extract the receiver into a 32-bit and 128-bit value
+    bool[160] receiverBits = unpack::<160>(receiver);
+    field receiver128 = pack::<128>(receiverBits[0..128]);
+    field receiver32 = pack::<32>(receiverBits[128..160]);
+
+    // 2b. Calculate the hash of the preImage and receiver, and compare it against
+    //     the combined hash c0 that was passed in.
+    field[2] c = sha256packed([a, b, receiver128, receiver32]);
+    assert(c0 == c[0]);
+    assert(c1 == c[1]);
+}

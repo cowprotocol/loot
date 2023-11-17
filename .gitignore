@@ -13,3 +13,5 @@ out/
 # Coverage
 coverage/
 lcov.info
+
+target/

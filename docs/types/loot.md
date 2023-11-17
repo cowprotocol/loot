@@ -2,11 +2,9 @@
 
 ## Overview
 
-A _loot_ order type is a simple concrete _buy_ order, enforcing some conditions on the `receiver` in order to satisfy the treasure hunt's terms.
+A _loot_ order type is a simple concrete _sell_ order, enforcing some conditions on the `receiver` in order to satisfy the treasure hunt's terms.
 
-As prizes are advertised in a fixed number of tokens, the CoW Protocol order type is set to `buy` to ensure that the output tokens are the same as the advertised prize tokens.
-
-**NOTE**: As `buy` orders are used, the `sellAmount` must take into account the `buyAmount` and the protocols' fees.
+**NOTE**: As `sell` orders are used, the `buyAmount` must take into account the `sellAmount` and the protocols' fees.
 
 ### `receiver` Conditions
 
@@ -15,6 +13,7 @@ The `receiver` of a _loot_ order _MUST_ satisfy the following conditions:
 1. The `receiver` _MUST_ be a deploy [`Safe`](https://safe.global).
 2. The `receiver` _MUST_ have their Safe's fallback handler set to the [`ExtensibleFallbackHandler`](https://github.com/cowprotocol/composable-cow).
 3. The `receiver` _MUST_ have set `ComposableCoW` as the domain verifier for the `GPv2Settlement` EIP-712 domain.
+4. The `receiver` _MUST_ match that which the zk-SNARK proof was generated for.
 
 
 ## Data Structure
@@ -36,10 +35,12 @@ struct Data {
     uint32 validTo;
     // treasure hunt specifics
     uint32 startTime; // unix timestamp when the hunt starts
+    bytes32 d0; // first 128 bits of the digest
+    bytes32 d1; // second 128 bits of the digest
 }
 ```
 
-Off-chain data is also required to be passed. The `offChainInput` field shall be set to the `abi.encode(address(receiver))` where the `receiver` satisfies the conditions above.
+Off-chain data is also required to be passed. The `offChainInput` field shall be set to the `abi.encode(address(receiver), IZkVerifier.Proof)` where the `receiver` satisfies the conditions above, and the `IZkVerifier.Proof` is generated for the same `receiver`.
 
 ### Storage
 
@@ -56,7 +57,7 @@ The following `GPv2Order.Data` fields are calculated / auto-filled by the contra
 
 ## Limitations
 
-* `buy` orders ONLY
+* `sell` orders ONLY
 * `sellToken` MUST NOT be the same as `buyToken`
 * `sellAmount` MUST be greater than 0
 * `buyAmount` MUST be greater than 0
@@ -65,7 +66,7 @@ The following `GPv2Order.Data` fields are calculated / auto-filled by the contra
 
 ### Replay Mitigation
 
-1. Replay attacks are not possible for `Loot` order types as the entire `GPv2Order.Data` struct is prescriptively defined by the `Data` struct. No fields are calculated dynamically. Therefore, this is the same as a user's normal limit order, in which case replay attacks are mitigated by `GPv2Settlement` monitoring the filled amounts of the order's corresponding `orderUid`.
+1. Replay attacks are possible if there are multiple `Loot` orders placed for the same `Safe`. As the `receiver` is not fixed, multiple receivers could be created and ues the same zk-Proof to claim additional rewards and drain the `Safe`. For this reason, do not keep greater than `sellAmount` of `sellToken` in the `Safe` (no multiple orders).
 
 ## Usage
 

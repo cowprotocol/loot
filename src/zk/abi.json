@@ -1,0 +1,55 @@
+{
+  "inputs": [
+    {
+      "name": "a",
+      "public": false,
+      "type": "field"
+    },
+    {
+      "name": "b",
+      "public": false,
+      "type": "field"
+    },
+    {
+      "name": "pa",
+      "public": false,
+      "type": "field"
+    },
+    {
+      "name": "pb",
+      "public": false,
+      "type": "field"
+    },
+    {
+      "name": "d0",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "d1",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "receiver",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "c0",
+      "public": false,
+      "type": "field"
+    },
+    {
+      "name": "c1",
+      "public": false,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "tuple",
+    "components": {
+      "elements": []
+    }
+  }
+}

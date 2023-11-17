@@ -9,6 +9,7 @@ import {ComposableCoW} from "composable/ComposableCoW.sol";
 import {ExtensibleFallbackHandler} from "safe/handler/ExtensibleFallbackHandler.sol";
 
 import "composable/BaseConditionalOrder.sol";
+import {IZkVerifier} from "./interfaces/IZkVerifier.sol";
 
 // --- error strings
 /// @dev can't buy and sell the same token
@@ -29,6 +30,8 @@ string constant ERR_INVALID_FALLBACK_HANDLER = "invalid fallback handler";
 string constant ERR_NOT_SAFE = "receiver is not a Safe";
 /// @dev domain verifier not set
 string constant ERR_DOMAIN_VERIFIER_NOT_SET = "domain verifier not set";
+/// @dev invalid zk proof
+string constant ERR_INVALID_ZK_PROOF = "invalid zk proof";
 
 /**
  * @title Treasure hunt order type for CoW Protocol 💰🐮
@@ -45,10 +48,14 @@ contract Loot is BaseConditionalOrder {
         uint32 validTo;
         // treasure hunt specifics
         uint32 startTime; // unix timestamp when the hunt starts
+        bytes32 d0;
+        bytes32 d1;
     }
 
     ExtensibleFallbackHandler public immutable extensibleFallbackHandler;
     ComposableCoW public immutable composableCow;
+    IZkVerifier public immutable verifier;
+
     bytes32 public immutable domainSeparator;
 
     // From: https://github.com/safe-global/safe-contracts/blob/v1.4.1/contracts/base/FallbackManager.sol
@@ -56,10 +63,15 @@ contract Loot is BaseConditionalOrder {
     bytes32 internal constant FALLBACK_HANDLER_STORAGE_SLOT =
         0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
 
-    constructor(ExtensibleFallbackHandler _extensibleFallbackHandler, ComposableCoW _composableCow) {
+    constructor(
+        ExtensibleFallbackHandler _extensibleFallbackHandler,
+        ComposableCoW _composableCow,
+        IZkVerifier _verifier
+    ) {
         extensibleFallbackHandler = _extensibleFallbackHandler;
         composableCow = _composableCow;
         domainSeparator = _composableCow.domainSeparator();
+        verifier = _verifier;
     }
 
     /**
@@ -84,14 +96,14 @@ contract Loot is BaseConditionalOrder {
         }
 
         // get the off-chain input data and validate
-        Safe receiver = Safe(payable(abi.decode(offChainInput, (address))));
+        (address receiver, IZkVerifier.Proof memory proof) = abi.decode(offChainInput, (address, IZkVerifier.Proof));
 
         /**
          * @dev We only want to allow receivers that:
          *      1. Are a `Safe` with their fallback handler set to `ExtensibleFallbackHandler`
          *      2. Have set `ComposableCoW` as a domain verifier for the `GPv2Settlement` EIP-712 domain
          */
-        try receiver.getStorageAt(uint256(FALLBACK_HANDLER_STORAGE_SLOT), 1) returns (
+        try Safe(payable(receiver)).getStorageAt(uint256(FALLBACK_HANDLER_STORAGE_SLOT), 1) returns (
             bytes memory fallbackHandlerStorage
         ) {
             address fallbackHandler = abi.decode(fallbackHandlerStorage, (address));
@@ -99,12 +111,22 @@ contract Loot is BaseConditionalOrder {
                 revert OrderNotValid(ERR_INVALID_FALLBACK_HANDLER);
             }
 
-            address domainVerifier = address(extensibleFallbackHandler.domainVerifiers(receiver, domainSeparator));
+            address domainVerifier =
+                address(extensibleFallbackHandler.domainVerifiers(Safe(payable(receiver)), domainSeparator));
             if (domainVerifier != address(composableCow)) {
                 revert OrderNotValid(ERR_DOMAIN_VERIFIER_NOT_SET);
             }
         } catch {
             revert OrderNotValid(ERR_NOT_SAFE);
+        }
+
+        // use a zk proof to verify that the receiver indeed knows the secret, and is therefore eligible to receive the loot
+        if (
+            !IZkVerifier(verifier).verifyTx(
+                proof, [uint256(data.d0), uint256(data.d1), uint256(uint160(address(receiver)))]
+            )
+        ) {
+            revert OrderNotValid(ERR_INVALID_ZK_PROOF);
         }
 
         order = GPv2Order.Data(
@@ -116,7 +138,7 @@ contract Loot is BaseConditionalOrder {
             data.validTo,
             data.appData,
             0, // use zero fee for limit orders
-            GPv2Order.KIND_BUY, // use buy order for treasure hunts
+            GPv2Order.KIND_SELL, // use sell orders for treasure hunts - give them all!
             false, // partially fillable orders are not supported
             GPv2Order.BALANCE_ERC20,
             GPv2Order.BALANCE_ERC20
