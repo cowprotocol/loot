@@ -8,6 +8,10 @@ It's been a long, cold crypto-winter, but spring has finally arrived. The sun is
 
 Each treasure chest, except the first one, requires two keys to unlock. It is expected that MasterCoW uses long and complex secret phrases to generate the keys, so the CoW Protocol team has decided to use zk-SNARKs to verify the keys, without revealing them. The CoW Protocol team need your help to locate the keys, and prove that they are correct, so that they can unlock the treasure chests. You will be rewarded handsomely for your efforts, both monetarily, and with the eternal gratitude of the CoWmunity.  
 
+Treasure chests:
+
+* `gno:0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6`
+
 ## Getting started
 
 This repository is a mono-repo, containing:
