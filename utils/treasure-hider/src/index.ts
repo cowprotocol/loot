@@ -116,7 +116,7 @@ const saltOption = new Option(
 ).makeOptionMandatory(true);
 
 const swarmOption = new Option(
-  "--swarm <swarmCac>",
+  "--swarm <swarm>",
   "The swarm CAC that contains the proof JSON",
 ).conflicts(['ipfs', 'emit-proof']);
 

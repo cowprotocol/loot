@@ -17,7 +17,7 @@ export interface BuryOptions {
     d0: string;
     d1: string;
     numDecoys: number;
-    swarmCac?: string;
+    swarm?: string;
     ipfsCid?: string;
     emitProof?: boolean;
 }
@@ -96,8 +96,8 @@ export async function bury(options: BuryOptions): Promise<void> {
     const proofData = () => {
       if (options.emitProof) {
         return encodeProofLocationEmit(proof, params);
-      } else if (options.swarmCac) {
-        return encodeProofLocationSwarm(options.swarmCac);
+      } else if (options.swarm) {
+        return encodeProofLocationSwarm(options.swarm);
       } else if (options.ipfsCid) {
         return encodeProofLocationIPFS(options.ipfsCid);
       } else {

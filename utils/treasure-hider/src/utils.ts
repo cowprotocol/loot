@@ -189,8 +189,8 @@ export async function getParams(params: GetParams): Promise<ConditionalOrderPara
 // abi.encode(bytes[] order) where order = abi.encode(bytes32[] proof, ConditionalOrderParams params)
 export function encodeProofLocationEmit(proof: string[], params: ConditionalOrderParams): ProofStruct {
     const data = ethers.utils.defaultAbiCoder.encode(
-        ["bytes32[]", "tuple(address handler, bytes32 salt, bytes staticInput)"],
-        [proof, params],
+        ["tuple(bytes32[] proof, tuple(address handler, bytes32 salt, bytes staticInput) params)[]"],
+        [[{ proof, params }]],
     );
 
     return { data, location: ProofLocation.EMITTED }
