@@ -11,8 +11,8 @@ Each treasure chest, except the first one, requires two keys to unlock. It is ex
 Treasure chests (for rewards totaling 11,500 WXDAI + $1000 worth of of BZZ):
 
 * Chest 1: 500 WXDAI: [`gno:0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6`](https://gnosisscan.io/address/0x35d3Ed0752e1554cb281b1965BA20F11F8D9D6e6)
-* Chest 2: 1000 WXDAI + $1000 worth of BZZ from [Ethereum Swarm](https://ethswarm.org). Address TBD.
-* Chest 3: 10000 WXDAI. Address TBD.
+* Chest 2: 1000 WXDAI + $1000 worth of BZZ from [Ethereum Swarm](https://ethswarm.org). [`gno:0x1e35682D83f4351A64bE480F0c84735dfa2bD931`](https://gnosisscan.io/address/0x1e35682D83f4351A64bE480F0c84735dfa2bD931).
+* Chest 3: 10000 WXDAI. [`gno:0x5388B20D5433Acd1B3a249E69323F8F3Ff654c75`](https://gnosisscan.io/address/0x5388B20D5433Acd1B3a249E69323F8F3Ff654c75).
 
 ## Getting started
 
